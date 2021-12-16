@@ -39,8 +39,9 @@ Drawing::Drawing(std::string filename)
 		bool path_started = false;
         char previous_typ = '\0';
         Eigen::Vector2d previous_bezier_reflection;
-		while (*path != '\"')
+		while (previous_typ != '\"')
         {
+            while (*path == ' ') path++;
             char typ = *path;
             switch (typ)
             {
@@ -48,12 +49,13 @@ Drawing::Drawing(std::string filename)
                 case 'm':
                 {
                     //Move to
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d value;
                     for (size_t i = 0; i < 2; i++)
                     {
+                        while (*path < '0' || *path > '9') path++;
+                        char *end;
                         value(i) = strtod(path, &end);
-                        path = end; path++; while (*path == ' ') path++;
+                        path = end;
                     }
                     if (typ == 'M') current = value;
                     else current += value;
@@ -66,12 +68,13 @@ Drawing::Drawing(std::string filename)
                 case 'l':
                 {
                     //Line to
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d value;
                     for (size_t i = 0; i < 2; i++)
                     {
+                        while (*path < '0' || *path > '9') path++;
+                        char *end;
                         value(i) = strtod(path, &end);
-                        path = end; path++; while (*path == ' ') path++;
+                        path = end;
                     }
                     Eigen::Vector2d next = (typ == 'L') ? (value) : (current + value);
                     _segments.push_back(new Line( std::array<Eigen::Vector2d, 2>{ current, next } ));
@@ -85,10 +88,11 @@ Drawing::Drawing(std::string filename)
                 case 'v':
                 {
                     //Horizontal/vertical line to
-                    char *end; path++; while (*path == ' ') path++;
                     double value;
+                    while (*path < '0' || *path > '9') path++;
+                    char *end;
                     value = strtod(path, &end);
-                    path = end; path++; while (*path == ' ') path++;
+                    path = end;
                     Eigen::Vector2d next = current;
                     if (typ == 'H') next(0) = value;
                     if (typ == 'h') next(0) += value;
@@ -103,7 +107,7 @@ Drawing::Drawing(std::string filename)
                 case 'z':
                 {
                     //End of path
-                    path++; while (*path == ' ') path++;
+                    path++;
                     _segments.push_back(new Line( std::array<Eigen::Vector2d, 2>{ current, path_start } ));
                     current = path_start;
                     break;
@@ -113,14 +117,15 @@ Drawing::Drawing(std::string filename)
                 case 'c':
                 {
                     //Cubic Bezier
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d points[3];
                     for (size_t j = 0; j < 3; j++)
                     {
                         for (size_t i = 0; i < 2; i++)
                         {
+                            while (*path < '0' || *path > '9') path++;
+                            char *end;
                             points[j](i) = strtod(path, &end);
-                            path = end; path++; while (*path == ' ') path++;
+                            path = end;
                         }
                         if (typ == 'c') points[j] += current;
                     }
@@ -134,15 +139,16 @@ Drawing::Drawing(std::string filename)
                 case 's':
                 {
                     //Continue Cubic Bezier
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d points[3];
                     points[0] = (previous_typ == 'C' || previous_typ == 'c' || previous_typ == 'S' || previous_typ == 's') ? previous_bezier_reflection : current;
                     for (size_t j = 1; j < 3; j++)
                     {
                         for (size_t i = 0; i < 2; i++)
                         {
+                            while (*path < '0' || *path > '9') path++;
+                            char *end;
                             points[j](i) = strtod(path, &end);
-                            path = end; path++; while (*path == ' ') path++;
+                            path = end;
                         }
                         if (typ == 's') points[j] += current;
                     }
@@ -156,14 +162,15 @@ Drawing::Drawing(std::string filename)
                 case 'q':
                 {
                     //Quadratic Bezier
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d points[2];
                     for (size_t j = 0; j < 2; j++)
                     {
                         for (size_t i = 0; i < 2; i++)
                         {
+                            while (*path < '0' || *path > '9') path++;
+                            char *end;
                             points[j](i) = strtod(path, &end);
-                            path = end; path++; while (*path == ' ') path++;
+                            path = end;
                         }
                         if (typ == 'q') points[j] += current;
                     }
@@ -177,13 +184,14 @@ Drawing::Drawing(std::string filename)
                 case 't':
                 {
                     //Continue quadratic Bezier
-                    char *end; path++; while (*path == ' ') path++;
                     Eigen::Vector2d points[2];
                     points[0] = (previous_typ == 'Q' || previous_typ == 'q' || previous_typ == 'T' || previous_typ == 't') ? previous_bezier_reflection : current;
                     for (size_t i = 0; i < 2; i++)
                     {
-                        points[1](i) = strtod(path, &end);
-                        path = end; path++; while (*path == ' ') path++;
+                            while (*path < '0' || *path > '9') path++;
+                            char *end;
+                            points[1](i) = strtod(path, &end);
+                            path = end;
                     }
                     if (typ == 't') points[1] += current;
                     _segments.push_back(new BezierQuadratic( std::array<Eigen::Vector2d, 3>{ current, points[0], points[1] } ));
@@ -196,12 +204,13 @@ Drawing::Drawing(std::string filename)
                 case 'a':
                 {
                     //Arc
-                    char *end; path++; while (*path == ' ') path++;
                     double values[7];
                     for (size_t i = 0; i < 7; i++)
                     {
-                        values[i] = strtod(path, &end);
-                        path = end; path++; while (*path == ' ') path++;
+                            while (*path < '0' || *path > '9') path++;
+                            char *end;
+                            values[i] = strtod(path, &end);
+                            path = end;
                     }
                     Eigen::Vector2d next = (typ == 'A') ? (Eigen::Vector2d(values[5], values[6])) : (current + Eigen::Vector2d(values[5], values[6]));
                     Eigen::Vector2d radii = Eigen::Vector2d(values[0], values[1]);
@@ -209,9 +218,14 @@ Drawing::Drawing(std::string filename)
                     current = next;
                     break;
                 }
+
+                case '\"': break;
+
+                default: throw std::runtime_error("Drawing::Drawing: Invalid symbol");
             }
             previous_typ = typ;
         }
+        path = strstr(path, "d=\"");
     }
 }
 

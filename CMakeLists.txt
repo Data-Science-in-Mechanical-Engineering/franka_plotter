@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4)
 cmake_policy(SET CMP0048 NEW)
-project(franka_draw)
+project(franka_plotter)
 
 # c++
 set(CMAKE_CXX_STANDARD 11)
@@ -14,7 +14,7 @@ if (NOT Franka_FOUND)
   find_package(catkin COMPONENTS franka_control REQUIRED)
 endif()
 
-add_executable(franka_draw
+add_executable            (franka_plotter
 source/arc.cpp
 source/bezier_cubic.cpp
 source/bezier_quadratic.cpp
@@ -24,7 +24,7 @@ source/drawing.cpp
 source/main.cpp
 source/plotter.cpp
 source/segment.cpp)
-target_include_directories(franka_draw PUBLIC ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(franka_draw PUBLIC ${pinocchio_INCLUDE_DIRS})
-target_link_libraries     (franka_draw PUBLIC ${pinocchio_LIBRARIES})
-target_link_libraries     (franka_draw PUBLIC Franka::Franka)
+target_include_directories(franka_plotter PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries     (franka_plotter PUBLIC Franka::Franka)
+
+configure_file(source/vectorize.sh vectorize.sh)
