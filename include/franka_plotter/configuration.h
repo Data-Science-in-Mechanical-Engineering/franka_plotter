@@ -6,10 +6,10 @@ class Configuration
 {
 private:
     std::string _ip = "192.168.0.1";
-    double _speed = 0.02;
-    double _length = 0.05;
+    double _speed = 0.03;
+    double _length = 0.089;
     double _force = 0.01;
-    std::array<Eigen::Vector3d, 3> _corners { Eigen::Vector3d(-0.1, -0.6, 0.1), Eigen::Vector3d(0.1, -0.6, 0.1), Eigen::Vector3d(0.1, -0.4, 0.1) };
+    std::array<Eigen::Vector3d, 3> _corners { Eigen::Vector3d(0.129035, -0.683914, 0.0), Eigen::Vector3d(-0.0776371, -0.687913, 0.0), Eigen::Vector3d(-0.0753785, -0.486901, 0.0) };
     void _set(const std::string param, const std::string value);
 
 public:

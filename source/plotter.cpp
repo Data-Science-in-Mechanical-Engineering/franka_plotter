@@ -43,19 +43,20 @@ void Plotter::_compute_3d_target(Eigen::Vector2d target, Eigen::Vector3d *positi
             + (height * ((target(0) - _drawing->width()/2) / _drawing->height()) + width/2) * (left/width)
             + down * (target(1) / _drawing->height());
     }
-    *orientation = Eigen::AngleAxisd(atan2((*position)(1), (*position)(0)), Eigen::Vector3d::UnitZ()) * Eigen::Quaterniond(0,sqrt(0.5),sqrt(0.5),0);
+    //*orientation = Eigen::AngleAxisd(atan2((*position)(1), (*position)(0)), Eigen::Vector3d::UnitZ()) * Eigen::Quaterniond(0,sqrt(0.5),sqrt(0.5),0);
+    *orientation = Eigen::Quaterniond(0,1,0,0);
 }
 
 void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *orientation, Eigen::Vector3d *force)
 {
     const double maximal_ripple = 0.0001;
     const double height = 0.05;
-    const double moving_speed = 0.1;
+    const double moving_speed = 0.2;
 
     if (_state == State::plotting)
     {
         *force = Eigen::Vector3d(0, 0, -_configuration.force());
-        double fraction = _segment_time * _configuration.speed() / _drawing->segment(_segment).length() / _compute_3d_scale() / 1000;
+        double fraction = ((double)_segment_time / 1000) * _configuration.speed() / (_drawing->segment(_segment).length() * _compute_3d_scale());
         _compute_3d_target(_drawing->segment(_segment).point(std::min(fraction, 1.0)), position, orientation);
         
         if (fraction > 1.0)
@@ -63,7 +64,7 @@ void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *ori
             std::cout << "Segment " << _segment << "/" << _drawing->segment_number() << " finished" << std::endl;
             if (_segment + 1 == _drawing->segment_number()) _state = State::ascending;
             else if ((_drawing->segment(_segment).point(1.0) - _drawing->segment(_segment + 1).point(0.0)).norm() > maximal_ripple) _state = State::ascending;
-            else { _segment++; std::cout << "Plotting segment " << "/" << _drawing->segment_number() << _segment << std::endl; }
+            else { _segment++; std::cout << "Plotting segment " << _segment << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl; }
             _segment_time = 0;
         }
     }
@@ -103,12 +104,12 @@ void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *ori
     else if (_state == State::descending)
     {
         *force = Eigen::Vector3d::Zero();
-        _compute_3d_target(_drawing->segment(_segment).point(1.0), position, orientation);
+        _compute_3d_target(_drawing->segment(_segment).point(0.0), position, orientation);
         double fraction = _segment_time * _configuration.speed() / height / 1000;
         (*position)(2) += std::max(1.0 - fraction, 0.0) * height;
         if (fraction > 1.0)
         {
-            std::cout << "Plotting segment " << _segment << "/" << _drawing->segment_number() << std::endl;
+            std::cout << "Plotting segment " << _segment << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl;
             _state = State::plotting;
             _segment_time = 0;
         }
@@ -148,9 +149,11 @@ void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *ori
 
 Eigen::Matrix<double, 7, 1> Plotter::_compute_torques(const franka::RobotState &robot_state, Eigen::Vector3d target_position, Eigen::Quaterniond target_orientation, Eigen::Vector3d target_force) const
 {
+    //std::cout << " Position: " << target_position(0) << " " << target_position(1) << " " << target_position(2) << std::endl;
+
     //Setting constants
     const double translational_stiffness = 1000;
-    const double rotational_stiffness = 500;
+    const double rotational_stiffness = 50;
     Eigen::Matrix<double, 6, 6> stiffness = Eigen::Matrix<double, 6, 6>::Zero();
     stiffness.block<3,3>(0,0) = translational_stiffness * Eigen::Matrix<double, 3, 3>::Identity();
     stiffness.block<3,3>(3,3) = rotational_stiffness * Eigen::Matrix<double, 3, 3>::Identity();
@@ -180,9 +183,9 @@ Eigen::Matrix<double, 7, 1> Plotter::_compute_torques(const franka::RobotState &
     error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     error.tail(3) << -transform.linear() * error.tail(3);
     Eigen::Matrix<double, 7, 1> joint_torques = jacobian.transpose() * (- stiffness * error -damping * velocity_rotation) + coriolis;
-    Eigen::Matrix<double, 6, 1> translation_rotation_force = Eigen::Matrix<double, 6, 1>::Zero();
-    translation_rotation_force.segment<3>(0) = target_force;
-    joint_torques += jacobian.transpose() * translation_rotation_force;
+    //Eigen::Matrix<double, 6, 1> translation_rotation_force = Eigen::Matrix<double, 6, 1>::Zero();
+    //translation_rotation_force.segment<3>(0) = target_force;
+    //joint_torques += jacobian.transpose() * translation_rotation_force;
 
     return joint_torques;
 }

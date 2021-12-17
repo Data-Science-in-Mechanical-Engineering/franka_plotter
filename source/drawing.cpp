@@ -4,6 +4,7 @@
 #include "../include/franka_plotter/bezier_quadratic.h"
 #include "../include/franka_plotter/line.h"
 #include <fstream>
+#include <algorithm>
 
 Drawing::Drawing(std::string filename)
 {
@@ -227,6 +228,12 @@ Drawing::Drawing(std::string filename)
         }
         path = strstr(path, "d=\"");
     }
+
+    std::sort(_segments.begin(), _segments.end(),
+    [](Segment*a, Segment*b)
+    {
+        return a->length() > b->length();
+    });
 }
 
 size_t Drawing::segment_number() const

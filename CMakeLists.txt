@@ -27,4 +27,10 @@ source/segment.cpp)
 target_include_directories(franka_plotter PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries     (franka_plotter PUBLIC Franka::Franka)
 
+add_executable            (franka_plotter_grasp source/grasp.cpp)
+target_link_libraries     (franka_plotter_grasp PUBLIC Franka::Franka)
+
+add_executable            (franka_plotter_friction source/friction.cpp)
+target_link_libraries     (franka_plotter_friction PUBLIC Franka::Franka)
+
 configure_file(source/vectorize.sh vectorize.sh)
