@@ -62,13 +62,12 @@ Drawing::Drawing(std::string filename)
                     else current += value;
                     break;
                 }
-                
-                if (!path_started) { path_start = current; path_started = true; }
 
                 case 'L':
                 case 'l':
                 {
                     //Line to
+                    if (!path_started) { path_start = current; path_started = true; }
                     Eigen::Vector2d value;
                     for (size_t i = 0; i < 2; i++)
                     {
@@ -89,6 +88,7 @@ Drawing::Drawing(std::string filename)
                 case 'v':
                 {
                     //Horizontal/vertical line to
+                    if (!path_started) { path_start = current; path_started = true; }
                     double value;
                     while (*path < '0' || *path > '9') path++;
                     char *end;
@@ -118,6 +118,7 @@ Drawing::Drawing(std::string filename)
                 case 'c':
                 {
                     //Cubic Bezier
+                    if (!path_started) { path_start = current; path_started = true; }
                     Eigen::Vector2d points[3];
                     for (size_t j = 0; j < 3; j++)
                     {
@@ -140,6 +141,7 @@ Drawing::Drawing(std::string filename)
                 case 's':
                 {
                     //Continue Cubic Bezier
+                    if (!path_started) { path_start = current; path_started = true; }
                     Eigen::Vector2d points[3];
                     points[0] = (previous_typ == 'C' || previous_typ == 'c' || previous_typ == 'S' || previous_typ == 's') ? previous_bezier_reflection : current;
                     for (size_t j = 1; j < 3; j++)
@@ -163,6 +165,7 @@ Drawing::Drawing(std::string filename)
                 case 'q':
                 {
                     //Quadratic Bezier
+                    if (!path_started) { path_start = current; path_started = true; }
                     Eigen::Vector2d points[2];
                     for (size_t j = 0; j < 2; j++)
                     {
@@ -185,6 +188,7 @@ Drawing::Drawing(std::string filename)
                 case 't':
                 {
                     //Continue quadratic Bezier
+                    if (!path_started) { path_start = current; path_started = true; }
                     Eigen::Vector2d points[2];
                     points[0] = (previous_typ == 'Q' || previous_typ == 'q' || previous_typ == 'T' || previous_typ == 't') ? previous_bezier_reflection : current;
                     for (size_t i = 0; i < 2; i++)
@@ -205,6 +209,7 @@ Drawing::Drawing(std::string filename)
                 case 'a':
                 {
                     //Arc
+                    if (!path_started) { path_start = current; path_started = true; }
                     double values[7];
                     for (size_t i = 0; i < 7; i++)
                     {
@@ -229,11 +234,25 @@ Drawing::Drawing(std::string filename)
         path = strstr(path, "d=\"");
     }
 
-    std::sort(_segments.begin(), _segments.end(),
-    [](Segment*a, Segment*b)
+    double shorter_edge = std::min(_width, _height);
+    std::remove_if(_segments.begin(), _segments.end(), [shorter_edge](Segment*segment){ return segment->length() < 0.0001 * shorter_edge; });
+
+    for (size_t i = 0; i < _segments.size() - 1; i++)
     {
-        return a->length() > b->length();
-    });
+        size_t minimum_segment;
+        double minimum_distance = std::numeric_limits<double>::infinity();
+        for (size_t j = i + 1; j < _segments.size(); j++)
+        {
+            if ((_segments[i]->point(1.0) - _segments[j]->point(0.0)).norm() < minimum_distance)
+            {
+                minimum_segment = j;
+                minimum_distance = (_segments[i]->point(1.0) - _segments[j]->point(0.0)).norm();
+            }
+            Segment *segment = _segments[minimum_segment];
+            _segments.erase(_segments.begin() + minimum_segment);
+            _segments.insert(_segments.begin() + i + 1, segment);
+        }
+    }
 }
 
 size_t Drawing::segment_number() const

@@ -61,10 +61,10 @@ void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *ori
         
         if (fraction > 1.0)
         {
-            std::cout << "Segment " << _segment << "/" << _drawing->segment_number() << " finished" << std::endl;
+            std::cout << "Segment " << _segment + 1 << "/" << _drawing->segment_number() << " finished" << std::endl;
             if (_segment + 1 == _drawing->segment_number()) _state = State::ascending;
             else if ((_drawing->segment(_segment).point(1.0) - _drawing->segment(_segment + 1).point(0.0)).norm() > maximal_ripple) _state = State::ascending;
-            else { _segment++; std::cout << "Plotting segment " << _segment << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl; }
+            else { _segment++; std::cout << "Plotting segment " << _segment + 1 << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl; }
             _segment_time = 0;
         }
     }
@@ -109,7 +109,7 @@ void Plotter::_compute_target(Eigen::Vector3d *position, Eigen::Quaterniond *ori
         (*position)(2) += std::max(1.0 - fraction, 0.0) * height;
         if (fraction > 1.0)
         {
-            std::cout << "Plotting segment " << _segment << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl;
+            std::cout << "Plotting segment " << _segment + 1 << "/" << _drawing->segment_number() << ". Length: " << _drawing->segment(_segment).length() << std::endl;
             _state = State::plotting;
             _segment_time = 0;
         }
@@ -152,11 +152,11 @@ Eigen::Matrix<double, 7, 1> Plotter::_compute_torques(const franka::RobotState &
     //std::cout << " Position: " << target_position(0) << " " << target_position(1) << " " << target_position(2) << std::endl;
 
     //Setting constants
-    const double translational_stiffness = 1000;
-    const double rotational_stiffness = 50;
+    const double translational_stiffness = 3000;
+    const double rotational_stiffness = 60;
     Eigen::Matrix<double, 6, 6> stiffness = Eigen::Matrix<double, 6, 6>::Zero();
-    stiffness.block<3,3>(0,0) = translational_stiffness * Eigen::Matrix<double, 3, 3>::Identity();
-    stiffness.block<3,3>(3,3) = rotational_stiffness * Eigen::Matrix<double, 3, 3>::Identity();
+    stiffness.block<3,3>(0,0).diagonal() = translational_stiffness * Eigen::Matrix<double, 3, 1>(1.0, 1.0, 1.0);
+    stiffness.block<3,3>(3,3).diagonal() = rotational_stiffness * Eigen::Matrix<double, 3, 1>(1.0, 50.0, 1.0);
     Eigen::Matrix<double, 6, 6> damping = Eigen::Matrix<double, 6, 6>::Zero();
     damping.block<3,3>(0,0) = 2 * sqrt(translational_stiffness) * Eigen::Matrix<double, 3, 3>::Identity();
     damping.block<3,3>(3,3) = 2 * sqrt(rotational_stiffness) * Eigen::Matrix<double, 3, 3>::Identity();
