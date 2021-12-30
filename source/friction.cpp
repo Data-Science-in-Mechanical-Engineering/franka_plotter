@@ -1,5 +1,5 @@
+#include "../include/franka_plotter/configuration.h"
 #include <franka/robot.h>
-#include <franka/model.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -98,18 +98,19 @@ franka::Torques calibrate(const franka::RobotState &robot_state, franka::Duratio
 
 int _main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 1)
     {
-        std::cout << "Usage: ./franka_emulator_friction_calibrator <IP>" << std::endl;
+        std::cout << "Usage: ./franka_emulator_friction_calibrator" << std::endl;
         return 1;
     }
 
     //Init robot
-    franka::Robot real_robot(argv[1]);
-    real_robot.control(prepare);
+    Configuration configuration;
+    franka::Robot robot(configuration.ip());
+    robot.control(prepare);
     
     //Starting cycle
-    real_robot.control(calibrate);
+    robot.control(calibrate);
 
     //Printing parameters
     std::cout << "Calibration finished" << std::endl;
